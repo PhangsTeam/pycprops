@@ -119,7 +119,6 @@ def cube_decomp(s,
         label[baddata] = -1
         wslabel = random_walker(lbimage, label)
     if method == 'watershed':
-        print(compactness)
         wslabel = watershed(lbimage, markers=label, 
                             compactness=compactness)
     wslabel[baddata] = 0
