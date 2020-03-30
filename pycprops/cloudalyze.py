@@ -284,7 +284,7 @@ def cloudalyze(cube, label,
 
         thiscloud['POSANG'] = pa
         if not resolved:
-            thiscloud['PA_PC'] = np.nan
+            thiscloud['PA_DC'] = np.nan
             thiscloud['FWHM_MIN_DC'] = np.nan
             thiscloud['FWHM_MAJ_DC'] = np.nan
             thiscloud['RAD_PC'] = np.nan
