@@ -186,7 +186,7 @@ def cloudalyze(cube, label,
                distance=None,
                alphaCO=6.7, extrapolate=True,
                bootstrap=0, rmstorad=1.91,
-               noise=None, **kwargs):
+               noise=None, verbose=True, **kwargs):
     cloudlist = []
     spectral_unit = cube.spectral_axis
     dv = np.abs((cube.spectral_axis[1] 
@@ -202,7 +202,8 @@ def cloudalyze(cube, label,
     beamfwhm_pc = np.sqrt(bmaj_pc * bmin_pc)
     sigchan = dv / np.sqrt(2 * np.pi)
     uniqlabels = np.unique(label)
-    bar = ProgressBar(len(uniqlabels))
+    if verbose:
+        bar = ProgressBar(len(uniqlabels))
     for cloudnum, thislabel in enumerate(uniqlabels):
         if thislabel == 0:
             continue
@@ -382,7 +383,8 @@ def cloudalyze(cube, label,
                                          + 2*thiscloud['SIGV_UC']**2)
 
         cloudlist += [thiscloud]
-        bar.update()
+        if verbose:
+            bar.update()
     outtable = Table(cloudlist)
     return(outtable)
 

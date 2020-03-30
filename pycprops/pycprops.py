@@ -25,6 +25,7 @@ def fits2props(cube_file,
                asgnsuffix='_asgn',
                propsuffix='_props',
                delta=None,
+               verbose=True,
                asgn=None, **kwargs):
 
     s = SpectralCube.read(datadir + '/' + cube_file)
@@ -39,11 +40,13 @@ def fits2props(cube_file,
         delta = 2 * noise.median().value
     
     if asgn is None:
-        asgn = cube_decomp(s, delta=delta, **kwargs)
+        asgn = cube_decomp(s, delta=delta, verbose=verbose, **kwargs)
         output_asgn_name = cube_file.replace('.fits', asgnsuffix + '.fits')
         asgn.write(output_directory + '/' + output_asgn_name, overwrite=True)
 
-    props = cloudalyze(s, asgn.filled_data[:].value, distance=distance, **kwargs)
+    props = cloudalyze(s, asgn.filled_data[:].value,
+                       distance=distance, verbose=verbose,
+                       **kwargs)
     output_props_name = cube_file.replace(
         '.fits', propsuffix + '.fits')
     props.write(output_directory + '/' + output_props_name, overwrite=True)

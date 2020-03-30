@@ -32,14 +32,15 @@ def alllocmax(cube, friends=1, specfriends=1):
     data = np.nan_to_num(cube.filled_data[:].value)
     struct = disk(friends)
     maxfilt = nd.maximum_filter(data, footprint=struct[np.newaxis, :])
-    struct = np.ones((2 * friends + 1, 1, 1), dtype=np.bool)
+    struct = np.ones((2 * specfriends + 1, 1, 1), dtype=np.bool)
     maxfilt = nd.maximum_filter(maxfilt, footprint=struct)
     lmaxes = np.where((data == maxfilt) * (data != 0))
     return(lmaxes)
 
 
 def deriv_decimate_leaves(d, cube, meta,
-                          fscale=2, sigdiscont=0.5, nredun=2):
+                          fscale=2, sigdiscont=0.5,
+                          nredun=2, **kwargs):
     goodleaf = np.ones(len(d.leaves), dtype=np.bool)
 
     for i, leaf in enumerate(d.leaves):
@@ -76,6 +77,8 @@ def cube_decomp(s,
                 friends=3, 
                 compactness=1, 
                 method='watershed',
+                sigdiscont=0.5,
+                verbose=True,
                 **kwargs):
     maxes = alllocmax(s, friends=int(friends), specfriends=1)
 
@@ -84,7 +87,7 @@ def cube_decomp(s,
                               pruning.contains_seeds(maxes)])
 
     d = Dendrogram.compute(s.filled_data[:].value,
-                           verbose=True,
+                           verbose=verbose,
                            is_independent=indep)
 
     meta = {}
@@ -98,8 +101,12 @@ def cube_decomp(s,
     lam = np.median(s.with_spectral_unit(u.mm,
                                          velocity_convention='radio').spectral_axis)
     meta['wavelength'] = lam
+    if sigdiscont > 0:
+        leaves = deriv_decimate_leaves(d, s, meta, **kwargs)
+    else:
+        peaks = [leaf.get_peak()[0] for leaf in d.leaves]
+        leaves = tuples_to_arrays(peaks)
 
-    leaves = deriv_decimate_leaves(d, s, meta)
     label = np.zeros(s.shape, dtype=np.int)
 
     for i in np.arange(len(leaves[0])):
@@ -112,6 +119,7 @@ def cube_decomp(s,
         label[baddata] = -1
         wslabel = random_walker(lbimage, label)
     if method == 'watershed':
+        print(compactness)
         wslabel = watershed(lbimage, markers=label, 
                             compactness=compactness)
     wslabel[baddata] = 0
