@@ -98,6 +98,8 @@ def polynomial(p, x, order=1):
 
 def extrap(x, y, targett=0, order=1, slc=slice(5, None, None)):
     good = np.isfinite(x) * np.isfinite(y)
+    if len(x[good][slc]) == 0:
+        return(np.nan)
     coeffs = np.polyfit(x[good][slc], y[good][slc], order)
     result = opt.least_squares(polyloss, coeffs, loss='arctan',
                                args=(x[good][slc], y[good][slc]),
