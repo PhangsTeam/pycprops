@@ -219,7 +219,9 @@ def cloudalyze(cube, label,
                 rms = noise.filled_data[v, y, x].value
                 s2n = np.nanmax(t / rms)
                 thiscloud['S2N'] = s2n
-    
+            else:
+                thiscloud['S2N'] = np.nan
+                
         thiscloud['NPIX'] = len(x)
         thiscloud['CLOUDNUM'] = cloudnum
         thiscloud['DISTANCE_PC'] = distance.to(u.pc).value

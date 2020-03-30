@@ -45,7 +45,9 @@ def fits2props(cube_file,
         asgn.write(output_directory + '/' + output_asgn_name, overwrite=True)
 
     props = cloudalyze(s, asgn.filled_data[:].value,
-                       distance=distance, verbose=verbose,
+                       distance=distance,
+                       verbose=verbose,
+                       noise=noise,
                        **kwargs)
     output_props_name = cube_file.replace(
         '.fits', propsuffix + '.fits')
