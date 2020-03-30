@@ -1,7 +1,7 @@
 import warnings
 from astrodendro import Dendrogram, ppv_catalog
 from spectral_cube import SpectralCube
-from skimage.segmentation import watershed
+from skimage.segmentation import watershed, random_walker, relabel_sequential
 from skimage.morphology import disk
 from astropy.io import fits
 import astropy.units as u
@@ -75,6 +75,7 @@ def cube_decomp(s,
                 specfriends=1, 
                 friends=3, 
                 compactness=1, 
+                method='watershed',
                 **kwargs):
     maxes = alllocmax(s, friends=int(friends), specfriends=1)
 
@@ -107,7 +108,13 @@ def cube_decomp(s,
     maxval = np.nanmax(lbimage)
     baddata = np.isnan(lbimage)
     lbimage[baddata] = maxval+1
-    wslabel = watershed(lbimage, markers=label, compactness=compactness)
+    if method == 'random_walker':
+        label[baddata] = -1
+        wslabel = random_walker(lbimage, label)
+    if method == 'watershed':
+        wslabel = watershed(lbimage, markers=label, 
+                            compactness=compactness)
     wslabel[baddata] = 0
+    wslabel, _, _  = relabel_sequential(wslabel)
     asgn = SpectralCube(wslabel, s.wcs, header=s.header)
     return(asgn)
