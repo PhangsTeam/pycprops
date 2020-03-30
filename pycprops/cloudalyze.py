@@ -320,7 +320,15 @@ def cloudalyze(cube, label,
         thiscloud['SIGV_NODC_NOEX'] = moments_rot['rmsv_noex'] * dv
         thiscloud['SIGV_NODC'] = moments_rot['rmsv_ex'] * dv
 
-        thiscloud['MLUM_MSUN'] = alphaCO * thiscloud['FLUX_KKMS_PC2']
+        if callable(alphaCO):
+            thisalphaCO = alphaCO(thiscloud['XCTR_DEG'],
+                                  thiscloud['YCTR_DEG'])
+            thisalphaCO = thisalphaCO.to(u.M_sun
+                                         / (u.K * u.km
+                                            / u.s * u.pc**2)).value
+        else:
+            thisalphaCO = alphaCO
+        thiscloud['MLUM_MSUN'] = thisalphaCO * thiscloud['FLUX_KKMS_PC2']
         thiscloud['MVIR_MSUN'] = (1040 
                                   * thiscloud['RAD_PC']
                                   * thiscloud['SIGV_KMS']**2)

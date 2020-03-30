@@ -26,6 +26,7 @@ def fits2props(cube_file,
                propsuffix='_props',
                delta=None,
                verbose=True,
+               alphaCO=6.7,
                asgn=None, **kwargs):
 
     s = SpectralCube.read(datadir + '/' + cube_file)
@@ -48,6 +49,7 @@ def fits2props(cube_file,
                        distance=distance,
                        verbose=verbose,
                        noise=noise,
+                       alphaCO=alphaCO,
                        **kwargs)
     output_props_name = cube_file.replace(
         '.fits', propsuffix + '.fits')
