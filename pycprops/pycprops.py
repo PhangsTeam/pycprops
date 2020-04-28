@@ -22,12 +22,18 @@ def fits2props(cube_file,
                mask_file=None,
                noise_file=None,
                distance=None,
-               asgnsuffix='_asgn',
-               propsuffix='_props',
+               asgnname=None,
+               propsname=None,
                delta=None,
                verbose=True,
                alphaCO=6.7,
+               channelcorr=0.0,
                asgn=None, **kwargs):
+
+    if asgnname is None:
+        asgnname = cube_file.replace('.fits', '_asgn.fits')
+    if propsname is None:
+        propsname = cube_file.replace('.fits', '_props.fits')
 
     s = SpectralCube.read(datadir + '/' + cube_file)
     mask = fits.getdata(datadir + '/' + mask_file)
@@ -42,15 +48,14 @@ def fits2props(cube_file,
     
     if asgn is None:
         asgn = cube_decomp(s, delta=delta, verbose=verbose, **kwargs)
-        output_asgn_name = cube_file.replace('.fits', asgnsuffix + '.fits')
-        asgn.write(output_directory + '/' + output_asgn_name, overwrite=True)
+        asgn.write(output_directory + '/' + asgnname, overwrite=True)
 
     props = cloudalyze(s, asgn.filled_data[:].value,
                        distance=distance,
                        verbose=verbose,
                        noise=noise,
                        alphaCO=alphaCO,
+                       channelcorr=channelcorr,
                        **kwargs)
-    output_props_name = cube_file.replace(
-        '.fits', propsuffix + '.fits')
-    props.write(output_directory + '/' + output_props_name, overwrite=True)
+    
+    props.write(output_directory + '/' + propsname, overwrite=True)

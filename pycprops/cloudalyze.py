@@ -124,7 +124,7 @@ def pa_moment(x, y, t):
          [np.nansum(wt * (x - x0) * (y - y0)), np.nansum(wt * (y - y0)**2)]])
     det = np.linalg.det(mat)
     if (det == 0) or np.isnan(det):
-        return(np.nan)
+        return([np.nan, np.nan, np.nan])
     evals, evec = np.linalg.eig(mat)
     # if (np.nansum(transpose(mat) eq mat) eq 4 and mat[1, 0] eq 0) then $
     #     evec = [[1., 0], [0., 1.]] else $
@@ -186,7 +186,9 @@ def cloudalyze(cube, label,
                distance=None,
                alphaCO=6.7, extrapolate=True,
                bootstrap=0, rmstorad=1.91,
-               noise=None, verbose=True, **kwargs):
+               noise=None, verbose=True,
+               channelcorr=0.0,
+               **kwargs):
     cloudlist = []
     spectral_unit = cube.spectral_axis
     dv = np.abs((cube.spectral_axis[1] 
@@ -200,7 +202,12 @@ def cloudalyze(cube, label,
     bmaj_pc = (cube.beam.major.to(u.rad) / u.rad * distance).to(u.pc).value
     bmin_pc = (cube.beam.minor.to(u.rad) / u.rad * distance).to(u.pc).value
     beamfwhm_pc = np.sqrt(bmaj_pc * bmin_pc)
-    sigchan = dv / np.sqrt(2 * np.pi)
+    k = (0.47 * channelcorr
+         -0.23 * channelcorr**2
+         -0.16 * channelcorr**3
+         +0.43 * channelcorr**4)
+    
+    sigchan = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
     uniqlabels = np.unique(label)
     if verbose:
         bar = ProgressBar(len(uniqlabels))
@@ -313,6 +320,7 @@ def cloudalyze(cube, label,
         thiscloud['RAD_NODC_NOEX'] = (np.sqrt(moments_rot['rmsx_noex']
                                              * moments_rot['rmsy_noex']) 
                                       * rmstorad * dx)
+
         thiscloud['SIGV_KMS'] = np.sqrt(moments_rot['rmsv_ex']**2 
                                         - sigchan**2) * dv
         thiscloud['SIGV_NOEX'] = np.sqrt(moments_rot['rmsv_noex']**2
@@ -326,8 +334,11 @@ def cloudalyze(cube, label,
             thisalphaCO = thisalphaCO.to(u.M_sun
                                          / (u.K * u.km
                                             / u.s * u.pc**2)).value
+            thiscloud['ALPHA_CO'] = thisalphaCO
         else:
             thisalphaCO = alphaCO
+            thiscloud['ALPHA_CO'] = thisalphaCO
+            
         thiscloud['MLUM_MSUN'] = thisalphaCO * thiscloud['FLUX_KKMS_PC2']
         thiscloud['MVIR_MSUN'] = (1040 
                                   * thiscloud['RAD_PC']
