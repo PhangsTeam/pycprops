@@ -22,9 +22,13 @@ After installation, you can run in python:
 ```
 import pycprops
 import astropy.units as u
-cubefile = 'mycube.fits'
+cubefile = 'mycube.fits'  # Your cube
+mask = 'mycube.mask.fits' # Mask defining where to find emission
+d = 8.0 * u.kpc           # Distance (with units)
+
 pycprops.fits2props(cubefile,
-                    distance = 8.0 * u.kpc,
+                    mask_file=mask,
+                    distance=d,               
                     asgnname='mycube.asgn.fits',
                     propsname='mycube.props.fits')
 ```
