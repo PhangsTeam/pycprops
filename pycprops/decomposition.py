@@ -80,6 +80,14 @@ def cube_decomp(s,
                 sigdiscont=0.5,
                 verbose=True,
                 **kwargs):
+
+    if method=='nodecomp':
+        lbimage = s.mask.include()
+        wslabel, _ = nd.label(lbimage)
+        wslabel, _, _  = relabel_sequential(wslabel)
+        asgn = SpectralCube(wslabel, s.wcs, header=s.header)
+        return(asgn)
+
     maxes = alllocmax(s, friends=int(friends), specfriends=1)
 
     indep = pruning.all_true([pruning.min_npix(minpix),

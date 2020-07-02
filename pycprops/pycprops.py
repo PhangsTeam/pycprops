@@ -47,7 +47,8 @@ def fits2props(cube_file,
         delta = 2 * noise.median().value
     
     if asgn is None:
-        asgn = cube_decomp(s, delta=delta, verbose=verbose, **kwargs)
+        asgn = cube_decomp(s, delta=delta, verbose=verbose,
+                           **kwargs)
         asgn.write(output_directory + '/' + asgnname, overwrite=True)
 
     props = cloudalyze(s, asgn.filled_data[:].value,
