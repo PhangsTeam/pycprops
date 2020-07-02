@@ -6,3 +6,29 @@ This implements the same approaches developed in that paper, but there are a few
 - Local maximum identification and decimation uses the `astrodendro` dendrogram generation package, which is much master than the approach used in the original IDL version. 
 - The assignment of pixels to clouds uses the `scikit-image` segmentation toolkit, which leads to different (better) pixel assignment around a local maxium.  The boundaries between clouds are more "natural" than they were in the original `cprops` code.
 - Property extrapolation uses actual robust regression leading to <10% differences in some properties.
+
+# Installation
+
+`pycprops` is an installable python package.  Clone or download the github repository.
+
+```
+git clone https://github.com/PhangsTeam/pycprops.git
+cd pycprops
+python setup.py install
+```
+
+After installation, you can run in python:
+
+```
+import pycprops
+import astropy.units as u
+cubefile = 'mycube.fits'  # Your cube
+mask = 'mycube.mask.fits' # Mask defining where to find emission
+d = 8.0 * u.kpc           # Distance (with units)
+
+pycprops.fits2props(cubefile,
+                    mask_file=mask,
+                    distance=d,               
+                    asgnname='mycube.asgn.fits',
+                    propsname='mycube.props.fits')
+```
