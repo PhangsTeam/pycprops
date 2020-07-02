@@ -24,7 +24,7 @@ import pycprops
 import astropy.units as u
 cubefile = 'mycube.fits'
 pycprops.fits2props(cubefile,
-                    distance = 8.0 * u.kpc
-                    asgnname='mycube.asgn.fits'
+                    distance = 8.0 * u.kpc,
+                    asgnname='mycube.asgn.fits',
                     propsname='mycube.props.fits')
 ```
