@@ -218,10 +218,9 @@ def cloudalyze(cube, label,
         barfile = sys.stdout
         print("Calculating cloud properties for {0} clouds".format(len(uniqlabels)))
     else:
-        barfile = os.devnull
-    
+        barfile = open(os.devnull, 'w')
+
     for thislabel in ProgressBar(uniqlabels, file=barfile):
-        
         if thislabel == 0:
             continue
         thiscloud = OrderedDict()
@@ -249,7 +248,7 @@ def cloudalyze(cube, label,
         thiscloud['PPBEAM'] = cube.pixels_per_beam
         thiscloud['SIGCHAN_KMS'] = sigchan
         thiscloud['TMAX_K'] = np.nanmax(t)
-    
+
         moments = cloudmom(x, y, v, t)
         thiscloud['XCTR_PIX'] = moments['xcen']
         thiscloud['YCTR_PIX'] = moments['ycen']
@@ -261,7 +260,7 @@ def cloudalyze(cube, label,
         thiscloud['XCTR_DEG'] = a
         thiscloud['YCTR_DEG'] = d
         thiscloud['VCTR_KMS'] = vkms
-        
+
         thiscloud['MOMYPIX_NOEX'] = moments['rmsy_noex']
         thiscloud['MOMYPIX'] = moments['rmsy_ex']
         thiscloud['MOMVPIX_NOEX'] = moments['rmsv_noex']
@@ -271,9 +270,9 @@ def cloudalyze(cube, label,
 
         thiscloud['FLUX_NOEX'] = moments['flux_noex'] * dv * apix
         thiscloud['FLUX_KKMS_PC2'] = moments['flux_ex'] * dv * apix
-        
+
         thiscloud['SIGV_KMS'] = moments['rmsv_ex'] * dv
-        
+
         pa, _, _ = pa_moment(x, y, t)
 
         xrot = x * np.cos(pa) + y * np.sin(pa)
@@ -348,12 +347,12 @@ def cloudalyze(cube, label,
         else:
             thisalphaCO = alphaCO
             thiscloud['ALPHA_CO'] = thisalphaCO
-            
+
         thiscloud['MLUM_MSUN'] = thisalphaCO * thiscloud['FLUX_KKMS_PC2']
         thiscloud['MVIR_MSUN'] = (1040 
                                   * thiscloud['RAD_PC']
                                   * thiscloud['SIGV_KMS']**2)
-        
+
         if bootstrap > 0:
             bootlist = []
             bootlist_rot = []
@@ -414,6 +413,9 @@ def cloudalyze(cube, label,
                                          + 2*thiscloud['SIGV_UC']**2)
 
         cloudlist += [thiscloud]
+    if not verbose:
+        barfile.close()
+        
     outtable = Table(cloudlist)
     return(outtable)
 

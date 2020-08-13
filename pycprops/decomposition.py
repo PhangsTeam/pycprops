@@ -131,5 +131,6 @@ def cube_decomp(s,
                             compactness=compactness)
     wslabel[baddata] = 0
     wslabel, _, _  = relabel_sequential(wslabel)
+    wslabel = wslabel.astype(np.int)
     asgn = SpectralCube(wslabel, s.wcs, header=s.header)
     return(asgn)

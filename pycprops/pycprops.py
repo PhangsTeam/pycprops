@@ -40,8 +40,14 @@ def fits2props(cube_file,
     noise = SpectralCube.read(datadir + '/' +noise_file)
 
     distance_Mpc = distance.to(u.Mpc).value
-
-    s = s.with_mask(mask.astype(np.bool))    
+    import pdb; pdb.set_trace()
+    # Cast to boolean
+    nanmask = np.isnan(mask)
+    mask = mask.astype(np.bool)
+    mask[nanmask] = False
+    
+    s = s.with_mask(mask)
+    import pdb; pdb.set_trace()
     
     if delta is None:
         delta = 2 * noise.median().value
