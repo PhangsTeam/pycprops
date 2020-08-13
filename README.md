@@ -33,7 +33,7 @@ pycprops.fits2props(cubefile,
                     propsname='mycube.props.fits')
 ```
 
-The results of the `pycprops` code is an assignment file (`mycube.asgn.fits`) and a FITS BINTABLE catalog of GMC properties.  The tags in that catalog are described in the table below.
+The results of the `pycprops` code is an assignment file (`mycube.asgn.fits`) and a FITS BINTABLE (`mycube.props.fits`) catalog of GMC properties.  The tags in that catalog are described in the table below.
 
  | Tag Name | Description |
  |----------|------------|
