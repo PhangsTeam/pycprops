@@ -299,7 +299,7 @@ def cloudalyze(cube, label,
         thiscloud['MOMMINPIX_NOEX']=moments_rot_dc['rmsy_noex']
         thiscloud['MOMMIN_PC'] = moments_rot_dc['rmsy_ex'] * dx
 
-        thiscloud['MOMMAJ_NODC_PC'] = moments_rot['rmsx_ex'] * dx
+        thiscloud['MOMMIN_NODC_PC'] = moments_rot['rmsy_ex'] * dx
         thiscloud['MOMMINPIX_NODC'] = moments_rot['rmsy_ex']
         thiscloud['MOMMINPIX_NODC_NOEX'] = moments_rot['rmsy_noex']
 
