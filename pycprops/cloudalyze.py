@@ -10,7 +10,7 @@ import uuid
 from astropy.utils.console import ProgressBar
 from radio_beam import Beam
 from collections import OrderedDict
-import sys
+import sys, os
 # I too like to live dangerously
 np.seterr(all='ignore')
 
@@ -218,7 +218,7 @@ def cloudalyze(cube, label,
         barfile = sys.stdout
         print("Calculating cloud properties for {0} clouds".format(len(uniqlabels)))
     else:
-        barfile = None
+        barfile = os.devnull
     
     for thislabel in ProgressBar(uniqlabels, file=barfile):
         
