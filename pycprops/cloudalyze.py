@@ -10,7 +10,7 @@ import uuid
 from astropy.utils.console import ProgressBar
 from radio_beam import Beam
 from collections import OrderedDict
-
+import sys
 # I too like to live dangerously
 np.seterr(all='ignore')
 
@@ -85,7 +85,7 @@ def cloudmom(x, y, v, t, target=0):
 
 def polyloss(p, x, y, order=1):
     order = np.argsort(x)[::-1] + 1
-    wt = np.sqrt(1/(order))
+    wt = np.sqrt(1 / order)
     return((y - polynomial(p, x, order=order)) * wt)
 
 
@@ -209,14 +209,24 @@ def cloudalyze(cube, label,
     
     sigchan = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
     uniqlabels = np.unique(label)
+    # if verbose:
+    #     bar = ProgressBar(len(uniqlabels))
+
+    cloudnum = 0
+
     if verbose:
-        bar = ProgressBar(len(uniqlabels))
-    for cloudnum, thislabel in enumerate(uniqlabels):
+        barfile = sys.stdout
+        print("Calculating cloud properties for {0} clouds".format(len(uniqlabels)))
+    else:
+        barfile = None
+    
+    for thislabel in ProgressBar(uniqlabels, file=barfile):
+        
         if thislabel == 0:
             continue
         thiscloud = OrderedDict()
         (v, y, x,) = np.where(label == thislabel)
-        # v, y, x = np.unravel_index(idx, cube.shape)
+
         t = cube.filled_data[v, y, x].value
         if noise is not None:
             if isinstance(noise, float):
@@ -228,7 +238,7 @@ def cloudalyze(cube, label,
                 thiscloud['S2N'] = s2n
             else:
                 thiscloud['S2N'] = np.nan
-                
+        cloudnum += 1
         thiscloud['NPIX'] = len(x)
         thiscloud['CLOUDNUM'] = cloudnum
         thiscloud['DISTANCE_PC'] = distance.to(u.pc).value
@@ -404,8 +414,6 @@ def cloudalyze(cube, label,
                                          + 2*thiscloud['SIGV_UC']**2)
 
         cloudlist += [thiscloud]
-        if verbose:
-            bar.update()
     outtable = Table(cloudlist)
     return(outtable)
 
