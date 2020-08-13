@@ -131,6 +131,13 @@ def cube_decomp(s,
                             compactness=compactness)
     wslabel[baddata] = 0
     wslabel, _, _  = relabel_sequential(wslabel)
-    wslabel = wslabel.astype(np.int)
-    asgn = SpectralCube(wslabel, s.wcs, header=s.header)
+    ncld = np.max(wslabel)
+
+    # Be parsimonious about bit depth
+    if ncld > 32767:
+        wslabel = wslabel.astype(np.int32)
+    else:
+        wslabel = wslabel.astype(np.int16)
+
+    asgn = fits.PrimaryHDU(wslabel, header=s.header)
     return(asgn)
