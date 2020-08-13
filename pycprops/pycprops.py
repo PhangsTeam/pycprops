@@ -3,18 +3,19 @@ from spectral_cube import SpectralCube
 from skimage.segmentation import watershed
 from skimage.morphology import disk
 from astropy.io import fits
+from astropy.stats import mad_std
 import astropy.units as u
 import numpy as np
 import astrodendro.pruning as pruning
 import scipy.ndimage as nd
 from .cloudalyze import cloudalyze
 from .decomposition import cube_decomp
-np.seterr(all='ignore')
 import warnings
 import os
+
 #Shut up, I know what I'm doing
 warnings.simplefilter("ignore")
-
+np.seterr(all='ignore')
 
 def fits2props(cube_file,
                datadir=os.getcwd(),
@@ -37,7 +38,16 @@ def fits2props(cube_file,
 
     s = SpectralCube.read(datadir + '/' + cube_file)
     mask = fits.getdata(datadir + '/' + mask_file)
-    noise = SpectralCube.read(datadir + '/' +noise_file)
+
+    if noise_file is None:
+        print("No noise file found.  Calculating noise from Med. Abs. Dev of Data")
+        noise = s.mad_std().value
+        if delta is None:
+            delta = 2 * noise.value
+    else:
+        noise = SpectralCube.read(datadir + '/' +noise_file)
+        if delta is None:
+            delta = 2 * noise.median().value
 
     distance_Mpc = distance.to(u.Mpc).value
 
@@ -47,10 +57,6 @@ def fits2props(cube_file,
     mask[nanmask] = False
     
     s = s.with_mask(mask)
-
-    
-    if delta is None:
-        delta = 2 * noise.median().value
     
     if asgn is None:
         asgn = cube_decomp(s, delta=delta, verbose=verbose,
