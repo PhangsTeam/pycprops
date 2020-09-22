@@ -256,11 +256,30 @@ def cloudalyze(cube, label,
         a, d, vnative = cube.wcs.wcs_pix2world(moments['xcen'],
                                                moments['ycen'],
                                                moments['vcen'], 0)
-        vkms = u.Quantity(vnative, cube.spectral_axis.unit).to(u.km / u.s).value
+        vkms = u.Quantity(vnative,
+                          cube.spectral_axis.unit).to(u.km
+                                                      / u.s).value
         thiscloud['XCTR_DEG'] = a
         thiscloud['YCTR_DEG'] = d
         thiscloud['VCTR_KMS'] = vkms
 
+        maxidx = np.nanargmax(t)
+        thiscloud['XMAX_PIX'] = x[maxidx]
+        thiscloud['YMAX_PIX'] = y[maxidx]
+        thiscloud['VMAX_PIX'] = v[maxidx]
+        
+        a, d, vnative = cube.wcs.wcs_pix2world(x[maxidx],
+                                               y[maxidx],
+                                               v[maxidx], 0)
+
+        vkms = u.Quantity(vnative,
+                          cube.spectral_axis.unit).to(u.km
+                                                      / u.s).value
+
+        thiscloud['XMAX_DEG'] = a
+        thiscloud['YMAX_DEG'] = d
+        thiscloud['VMAX_KMS'] = vkms
+        
         thiscloud['MOMYPIX_NOEX'] = moments['rmsy_noex']
         thiscloud['MOMYPIX'] = moments['rmsy_ex']
         thiscloud['MOMVPIX_NOEX'] = moments['rmsv_noex']
