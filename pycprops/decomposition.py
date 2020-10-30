@@ -88,7 +88,7 @@ def cube_decomp(s,
         asgn = SpectralCube(wslabel, s.wcs, header=s.header)
         return(asgn)
 
-    maxes = alllocmax(s, friends=int(friends), specfriends=1)
+    maxes = alllocmax(s, friends=int(friends), specfriends=specfriends)
 
     indep = pruning.all_true([pruning.min_npix(minpix),
                               pruning.min_delta(delta),
