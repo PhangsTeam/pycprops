@@ -1,5 +1,5 @@
 import warnings
-from astrodendro import Dendrogram, ppv_catalog
+from astrodendro import Dendrogram, Structure, ppv_catalog
 from spectral_cube import SpectralCube
 from skimage.segmentation import watershed, random_walker, relabel_sequential
 from skimage.morphology import disk
@@ -13,6 +13,11 @@ np.seterr(all='ignore')
 warnings.simplefilter("ignore")
 
 
+def get_leaves(struct):
+    if type(struct) is Dendrogram:
+        return(d.leaves)
+    if type(struct) is Structure:
+        return([desc for desc in struct.descendants if desc.is_leaf])
 
 def tuples_to_arrays(peaks):
     x0 = []
@@ -41,9 +46,10 @@ def alllocmax(cube, friends=1, specfriends=1):
 def deriv_decimate_leaves(d, cube, meta,
                           fscale=2, sigdiscont=0.5,
                           nredun=2, **kwargs):
-    goodleaf = np.ones(len(d.leaves), dtype=np.bool)
+    leaves = get_leaves(d)
+    goodleaf = np.ones(len(leaves), dtype=np.bool)
 
-    for i, leaf in enumerate(d.leaves):
+    for i, leaf in enumerate(leaves):
         if not goodleaf[i] or (leaf.parent is None):
             continue
         parentobj = ppv_catalog([leaf.parent], meta, verbose=False)
@@ -61,7 +67,7 @@ def deriv_decimate_leaves(d, cube, meta,
                       >= nredun)
         goodleaf[i] = disc
     leaflist = []
-    for i, leaf in enumerate(d.leaves):
+    for i, leaf in enumerate(leaves):
         if goodleaf[i]:
             leaflist += [leaf]
     peaks = [leaf.get_peak()[0] for leaf in leaflist]
@@ -109,27 +115,51 @@ def cube_decomp(s,
     lam = np.median(s.with_spectral_unit(u.mm,
                                          velocity_convention='radio').spectral_axis)
     meta['wavelength'] = lam
-    if sigdiscont > 0:
-        leaves = deriv_decimate_leaves(d, s, meta, **kwargs)
-    else:
-        peaks = [leaf.get_peak()[0] for leaf in d.leaves]
-        leaves = tuples_to_arrays(peaks)
 
-    label = np.zeros(s.shape, dtype=np.int)
+    wslabel = np.zeros(s.shape, dtype=np.int)    
+    runmax = 0
+    for trunk in d.trunk:
+        v, y, x = trunk.indices()
+        if trunk.is_leaf:
+            wslabel[v,y,x] = runmax + 1
+            runmax += 1
+        else:
+            if sigdiscont > 0:
+                leaves = deriv_decimate_leaves(trunk, s, meta, **kwargs)
+            else:
+                leaves = get_leaves(trunk)
+                peaks = [leaf.get_peak()[0] for leaf in leaves]
+                leaves = tuples_to_arrays(peaks)
 
-    for i in np.arange(len(leaves[0])):
-        label[leaves[0][i], leaves[1][i], leaves[2][i]] = i + 1
-    lbimage = -s.filled_data[:].value
-    maxval = np.nanmax(lbimage)
-    baddata = np.isnan(lbimage)
-    lbimage[baddata] = maxval+1
-    if method == 'random_walker':
-        label[baddata] = -1
-        wslabel = random_walker(lbimage, label)
-    if method == 'watershed':
-        wslabel = watershed(lbimage, markers=label, 
-                            compactness=compactness)
-    wslabel[baddata] = 0
+            vals = s.filled_data[v, y, x].value
+            maxval = np.nanmax(vals)
+            lbimage = np.zeros(s.shape)
+            lbimage[v,y,x] = vals 
+            slcs = (nd.find_objects((lbimage != 0).astype(np.int)))[0]
+            
+
+            label = np.zeros(s.shape, dtype=np.int)
+            for i in np.arange(len(leaves[0])):
+                label[leaves[0][i], leaves[1][i], leaves[2][i]] = i + 1
+
+            sublbimage = lbimage[slcs]
+            labelmask = sublbimage != 0
+            sublabel = label[slcs]
+            if method == 'random_walker':
+                sublabel[~labelmask] = -1
+                sublabel = random_walker(sublbimage, sublabel)
+                sublabel[~labelmask] = 0
+            if method == 'watershed':
+                sublabel = watershed(sublbimage, markers=sublabel, 
+                                     compactness=compactness,
+                                     mask=labelmask)
+            sublabel, _,_ = relabel_sequential(sublabel)
+            mxlabel = np.max(sublabel)
+            sublabel[sublabel != 0] += runmax
+            wslabel[slcs] += sublabel
+            runmax += mxlabel
+            # import pdb; pdb.set_trace()
+    # This shouldn't be needed, but I'm paranoid.
     wslabel, _, _  = relabel_sequential(wslabel)
     ncld = np.max(wslabel)
 
