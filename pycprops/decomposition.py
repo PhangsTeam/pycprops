@@ -158,7 +158,7 @@ def cube_decomp(s,
             sublabel[sublabel != 0] += runmax
             wslabel[slcs] += sublabel
             runmax += mxlabel
-            # import pdb; pdb.set_trace()
+
     # This shouldn't be needed, but I'm paranoid.
     wslabel, _, _  = relabel_sequential(wslabel)
     ncld = np.max(wslabel)
