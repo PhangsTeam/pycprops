@@ -42,12 +42,12 @@ def fits2props(cube_file,
 
     if allow_huge:
       s.allow_huge_operations = True
-    
+
     if noise_file is None:
         print("No noise file found.  Calculating noise from Med. Abs. Dev of Data")
         noise = s.mad_std().value
         if delta is None:
-            delta = 2 * noise.value
+            delta = 2 * noise
     else:
         noise = SpectralCube.read(datadir + '/' +noise_file)
         if delta is None:
@@ -59,9 +59,9 @@ def fits2props(cube_file,
     nanmask = np.isnan(mask)
     mask = mask.astype(np.bool)
     mask[nanmask] = False
-    
+
     s = s.with_mask(mask)
-    
+
     if asgn is None:
         asgn = cube_decomp(s, delta=delta, verbose=verbose,
                            **kwargs)
@@ -74,5 +74,5 @@ def fits2props(cube_file,
                        alphaCO=alphaCO,
                        channelcorr=channelcorr,
                        **kwargs)
-    
+
     props.write(output_directory + '/' + propsname, overwrite=True)
