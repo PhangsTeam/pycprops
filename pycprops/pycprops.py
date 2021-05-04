@@ -47,7 +47,7 @@ def fits2props(cube_file,
         print("No noise file found.  Calculating noise from Med. Abs. Dev of Data")
         noise = s.mad_std().value
         if delta is None:
-            delta = 2 * noise
+            delta = 2 * float(noise)
     else:
         noise = SpectralCube.read(datadir + '/' +noise_file)
         if delta is None:
