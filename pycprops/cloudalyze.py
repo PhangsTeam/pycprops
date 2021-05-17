@@ -207,7 +207,7 @@ def cloudalyze(cube, label,
          -0.16 * channelcorr**3
          +0.43 * channelcorr**4)
     
-    sigchan = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
+    sigchan_kms = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
     uniqlabels = np.unique(label)
     # if verbose:
     #     bar = ProgressBar(len(uniqlabels))
@@ -246,7 +246,7 @@ def cloudalyze(cube, label,
         thiscloud['BEAMMIN_PC'] = bmin_pc
         thiscloud['RMSTORAD'] = rmstorad
         thiscloud['PPBEAM'] = cube.pixels_per_beam
-        thiscloud['SIGCHAN_KMS'] = sigchan
+        thiscloud['SIGCHAN_KMS'] = sigchan_kms
         thiscloud['TMAX_K'] = np.nanmax(t)
 
         moments = cloudmom(x, y, v, t)
@@ -349,10 +349,10 @@ def cloudalyze(cube, label,
                                              * moments_rot['rmsy_noex']) 
                                       * rmstorad * dx)
 
-        thiscloud['SIGV_KMS'] = np.sqrt(moments_rot['rmsv_ex']**2 
-                                        - sigchan**2) * dv
-        thiscloud['SIGV_NOEX'] = np.sqrt(moments_rot['rmsv_noex']**2
-                                        - sigchan**2) * dv
+        thiscloud['SIGV_KMS'] = np.sqrt(moments_rot['rmsv_ex']**2 * dv**2
+                                        - sigchan_kms**2) 
+        thiscloud['SIGV_NOEX'] = np.sqrt(moments_rot['rmsv_noex']**2 * dv**2
+                                        - sigchan_kms**2)
         thiscloud['SIGV_NODC_NOEX'] = moments_rot['rmsv_noex'] * dv
         thiscloud['SIGV_NODC'] = moments_rot['rmsv_ex'] * dv
 
