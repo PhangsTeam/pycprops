@@ -421,15 +421,15 @@ def cloudalyze(cube, label,
             thiscloud['MOMMINPIX_UC']=uc_dict_rot['rmsy_ex']
             thiscloud['MOMMINPIX_NOEX_UC']=uc_dict_rot['rmsy_noex']
             thiscloud['RAD_UC']=np.sqrt(uc_dict_rot['rmsx_ex']**2 +
-                                        uc_dict_rot['rmsx_ex']**2) * 0.5
+                                        uc_dict_rot['rmsy_ex']**2) * 0.5
             thiscloud['RAD_NODC_UC'] = np.sqrt(uc_dict_rot['rmsx_ex']**2 +
-                                               uc_dict_rot['rmsx_ex']**2) * 0.5
+                                               uc_dict_rot['rmsy_ex']**2) * 0.5
             thiscloud['RAD_NOEX_UC']=np.sqrt(uc_dict_rot['rmsx_noex']**2 +
-                                             uc_dict_rot['rmsx_noex']**2) * 0.5
+                                             uc_dict_rot['rmsy_noex']**2) * 0.5
             thiscloud['RAD_NODC_NOEX_UC'] = np.sqrt(uc_dict_rot['rmsx_noex']**2 +
-                                                    uc_dict_rot['rmsx_noex']**2) * 0.5
+                                                    uc_dict_rot['rmsy_noex']**2) * 0.5
             thiscloud['MVIR_UC']=np.sqrt(thiscloud['RAD_UC']**2 
-                                         + 2*thiscloud['SIGV_UC']**2)
+                                         + 4 * thiscloud['SIGV_UC']**2)
 
         cloudlist += [thiscloud]
     if not verbose:
