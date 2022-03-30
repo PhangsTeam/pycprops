@@ -15,7 +15,7 @@ warnings.simplefilter("ignore")
 
 def get_leaves(struct):
     if type(struct) is Dendrogram:
-        return(d.leaves)
+        return(struct.leaves)
     if type(struct) is Structure:
         return([desc for desc in struct.descendants if desc.is_leaf])
 
