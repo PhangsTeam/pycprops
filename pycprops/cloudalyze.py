@@ -98,7 +98,7 @@ def polynomial(p, x, order=1):
 
 def extrap(x, y, targett=0, order=1, slc=slice(5, None, None)):
     good = np.isfinite(x) * np.isfinite(y)
-    if len(x[good][slc]) == 0:
+    if (len(x[good][slc]) == 0) or (np.all(x[good][slc] == 0)):
         return(np.nan)
     coeffs = np.polyfit(x[good][slc], y[good][slc], order)
     result = opt.least_squares(polyloss, coeffs, loss='arctan',
@@ -191,8 +191,9 @@ def cloudalyze(cube, label,
                **kwargs):
     cloudlist = []
     spectral_unit = cube.spectral_axis
-    dv = np.abs((cube.spectral_axis[1] 
-                 - cube.spectral_axis[0]).to(u.km / u.s).value)
+    dv = np.abs(
+        cube.wcs.proj_plane_pixel_scales()[-1].to(u.km / u.s).value
+        )
     apix_sr =(np.abs(np.linalg.det(cube.wcs.celestial.pixel_scale_matrix)) 
               * u.deg**2).to(u.sr)
     pixscale = np.sqrt(np.abs(np.linalg.det(
@@ -207,7 +208,7 @@ def cloudalyze(cube, label,
          -0.16 * channelcorr**3
          +0.43 * channelcorr**4)
     
-    sigchan = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
+    sigchan_kms = dv / np.sqrt(2 * np.pi) * (1 + 1.18 * k + 10.4 * k**2)
     uniqlabels = np.unique(label)
     # if verbose:
     #     bar = ProgressBar(len(uniqlabels))
@@ -246,7 +247,7 @@ def cloudalyze(cube, label,
         thiscloud['BEAMMIN_PC'] = bmin_pc
         thiscloud['RMSTORAD'] = rmstorad
         thiscloud['PPBEAM'] = cube.pixels_per_beam
-        thiscloud['SIGCHAN_KMS'] = sigchan
+        thiscloud['SIGCHAN_KMS'] = sigchan_kms
         thiscloud['TMAX_K'] = np.nanmax(t)
 
         moments = cloudmom(x, y, v, t)
@@ -349,10 +350,10 @@ def cloudalyze(cube, label,
                                              * moments_rot['rmsy_noex']) 
                                       * rmstorad * dx)
 
-        thiscloud['SIGV_KMS'] = np.sqrt(moments_rot['rmsv_ex']**2 
-                                        - sigchan**2) * dv
-        thiscloud['SIGV_NOEX'] = np.sqrt(moments_rot['rmsv_noex']**2
-                                        - sigchan**2) * dv
+        thiscloud['SIGV_KMS'] = np.sqrt(moments_rot['rmsv_ex']**2 * dv**2
+                                        - sigchan_kms**2) 
+        thiscloud['SIGV_NOEX'] = np.sqrt(moments_rot['rmsv_noex']**2 * dv**2
+                                        - sigchan_kms**2)
         thiscloud['SIGV_NODC_NOEX'] = moments_rot['rmsv_noex'] * dv
         thiscloud['SIGV_NODC'] = moments_rot['rmsv_ex'] * dv
 
@@ -421,15 +422,15 @@ def cloudalyze(cube, label,
             thiscloud['MOMMINPIX_UC']=uc_dict_rot['rmsy_ex']
             thiscloud['MOMMINPIX_NOEX_UC']=uc_dict_rot['rmsy_noex']
             thiscloud['RAD_UC']=np.sqrt(uc_dict_rot['rmsx_ex']**2 +
-                                        uc_dict_rot['rmsx_ex']**2) * 0.5
+                                        uc_dict_rot['rmsy_ex']**2) * 0.5
             thiscloud['RAD_NODC_UC'] = np.sqrt(uc_dict_rot['rmsx_ex']**2 +
-                                               uc_dict_rot['rmsx_ex']**2) * 0.5
+                                               uc_dict_rot['rmsy_ex']**2) * 0.5
             thiscloud['RAD_NOEX_UC']=np.sqrt(uc_dict_rot['rmsx_noex']**2 +
-                                             uc_dict_rot['rmsx_noex']**2) * 0.5
+                                             uc_dict_rot['rmsy_noex']**2) * 0.5
             thiscloud['RAD_NODC_NOEX_UC'] = np.sqrt(uc_dict_rot['rmsx_noex']**2 +
-                                                    uc_dict_rot['rmsx_noex']**2) * 0.5
+                                                    uc_dict_rot['rmsy_noex']**2) * 0.5
             thiscloud['MVIR_UC']=np.sqrt(thiscloud['RAD_UC']**2 
-                                         + 2*thiscloud['SIGV_UC']**2)
+                                         + 4 * thiscloud['SIGV_UC']**2)
 
         cloudlist += [thiscloud]
     if not verbose:
