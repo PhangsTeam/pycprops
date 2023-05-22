@@ -192,7 +192,7 @@ def cloudalyze(cube, label,
     cloudlist = []
     spectral_unit = cube.spectral_axis
     dv = np.abs(
-        cube.wcs.proj_plane_pixel_scales()[-1].to(u.km / u.s).value
+        cube.wcs.spectral.proj_plane_pixel_scales()[0].to(u.km / u.s).value
         )
     apix_sr =(np.abs(np.linalg.det(cube.wcs.celestial.pixel_scale_matrix)) 
               * u.deg**2).to(u.sr)

@@ -45,7 +45,8 @@ def alllocmax(cube, friends=1, specfriends=1):
 
 def deriv_decimate_leaves(d, cube, meta,
                           fscale=2, sigdiscont=0.5,
-                          nredun=2, **kwargs):
+                          nredun=2,
+                          **kwargs):
     leaves = get_leaves(d)
     goodleaf = np.ones(len(leaves), dtype=np.bool)
 
@@ -70,10 +71,7 @@ def deriv_decimate_leaves(d, cube, meta,
     for i, leaf in enumerate(leaves):
         if goodleaf[i]:
             leaflist += [leaf]
-    peaks = [leaf.get_peak()[0] for leaf in leaflist]
-    indices = tuples_to_arrays(peaks)
-
-    return(indices)
+    return(leaflist)
 
 
 def cube_decomp(s, 
@@ -118,6 +116,7 @@ def cube_decomp(s,
 
     wslabel = np.zeros(s.shape, dtype=np.int)    
     runmax = 0
+
     for trunk in d.trunk:
         v, y, x = trunk.indices()
         if trunk.is_leaf:
@@ -128,36 +127,39 @@ def cube_decomp(s,
                 leaves = deriv_decimate_leaves(trunk, s, meta, **kwargs)
             else:
                 leaves = get_leaves(trunk)
+            if method == 'leavesonly':
+                for leaf in leaves:
+                    v, y, x = leaf.indices()
+                    wslabel[v, y, x] = runmax + 1
+                    runmax += 1
+            else:
                 peaks = [leaf.get_peak()[0] for leaf in leaves]
                 leaves = tuples_to_arrays(peaks)
+                vals = s.filled_data[v, y, x].value
+                lbimage = np.zeros(s.shape)
+                lbimage[v,y,x] = vals 
+                slcs = (nd.find_objects((lbimage != 0).astype(np.int)))[0]
+                
+                label = np.zeros(s.shape, dtype=np.int)
+                for i in np.arange(len(leaves[0])):
+                    label[leaves[0][i], leaves[1][i], leaves[2][i]] = i + 1
 
-            vals = s.filled_data[v, y, x].value
-            maxval = np.nanmax(vals)
-            lbimage = np.zeros(s.shape)
-            lbimage[v,y,x] = vals 
-            slcs = (nd.find_objects((lbimage != 0).astype(np.int)))[0]
-            
-
-            label = np.zeros(s.shape, dtype=np.int)
-            for i in np.arange(len(leaves[0])):
-                label[leaves[0][i], leaves[1][i], leaves[2][i]] = i + 1
-
-            sublbimage = lbimage[slcs]
-            labelmask = sublbimage != 0
-            sublabel = label[slcs]
-            if method == 'random_walker':
-                sublabel[~labelmask] = -1
-                sublabel = random_walker(sublbimage, sublabel)
-                sublabel[~labelmask] = 0
-            if method == 'watershed':
-                sublabel = watershed(sublbimage, markers=sublabel, 
-                                     compactness=compactness,
-                                     mask=labelmask)
-            sublabel, _,_ = relabel_sequential(sublabel)
-            mxlabel = np.max(sublabel)
-            sublabel[sublabel != 0] += runmax
-            wslabel[slcs] += sublabel
-            runmax += mxlabel
+                sublbimage = lbimage[slcs]
+                labelmask = sublbimage != 0
+                sublabel = label[slcs]
+                if method == 'random_walker':
+                    sublabel[~labelmask] = -1
+                    sublabel = random_walker(sublbimage, sublabel)
+                    sublabel[~labelmask] = 0
+                if method == 'watershed':
+                    sublabel = watershed(sublbimage, markers=sublabel, 
+                                        compactness=compactness,
+                                        mask=labelmask)
+                sublabel, _,_ = relabel_sequential(sublabel)
+                mxlabel = np.max(sublabel)
+                sublabel[sublabel != 0] += runmax
+                wslabel[slcs] += sublabel
+                runmax += mxlabel
 
     # This shouldn't be needed, but I'm paranoid.
     wslabel, _, _  = relabel_sequential(wslabel)
