@@ -1,12 +1,11 @@
 import numpy as np
-from spectral_cube import SpectralCube
+# from spectral_cube import SpectralCube
 from astropy.table import Table, Column
 from astropy.io import fits
 import astropy.units as u
 import scipy.optimize as opt
 from astropy.stats import mad_std
 import matplotlib.pyplot as plt
-import uuid
 from astropy.utils.console import ProgressBar
 from radio_beam import Beam
 from collections import OrderedDict
@@ -64,23 +63,6 @@ def cloudmom(x, y, v, t, target=0):
     moments['flux_ex'] = extrap(t, mom0t, order=2, 
                                 targett=target, slc=slc)
 
-    # fig, axlist = plt.subplots(2, 2)
-    # fig.set_size_inches(6, 6)
-    # axlist = axlist.flatten()
-    # axlist[0].plot(t, mom2x, 'ro')
-    # axlist[0].plot(0, moments['rmsx_ex'], 'bx')
-    # axlist[1].plot(t, mom2y, 'ro')
-    # axlist[1].plot(0, moments['rmsy_ex'], 'bx')
-    # axlist[2].plot(t, mom2v, 'ro')
-    # axlist[2].plot(0, moments['rmsv_ex'], 'bx')
-    # axlist[3].plot(t, mom0t, 'ro')
-    # axlist[3].plot(0, moments['flux_ex'], 'bx')
-    
-    # unique_filename = str(uuid.uuid4())
-    # plt.tight_layout()
-    # plt.savefig('figs/' + unique_filename + '.png')
-    # plt.close()
-    # plt.clf()
     return(moments)
 
 def polyloss(p, x, y, order=1):

@@ -55,7 +55,6 @@ def deriv_decimate_leaves(d, cube, meta,
             continue
         parentobj = ppv_catalog([leaf.parent], meta, verbose=False)
         children = ppv_catalog(leaf.parent.children, meta, verbose=False)
-        thisleaf = np.array(children['_idx']) == leaf.idx
         dmajor = np.array((parentobj['major_sigma'] - children['major_sigma'])
                           / children['major_sigma']) > sigdiscont
         dminor = np.array((parentobj['minor_sigma'] - children['minor_sigma'])
@@ -128,10 +127,47 @@ def cube_decomp(s,
             else:
                 leaves = get_leaves(trunk)
             if method == 'leavesonly':
-                for leaf in leaves:
-                    v, y, x = leaf.indices()
-                    wslabel[v, y, x] = runmax + 1
-                    runmax += 1
+                if sigdiscont > 0:
+                    # if we decimated kernels, we need to 
+                    # recalculate dendrogram only the remaining leaves
+                    if len(leaves) == 0:
+                        for struct in [trunk, *trunk.descendants]:
+                            v, y, x = struct.indices()
+                            wslabel[v, y, x] = runmax + 1
+                        runmax += 1
+                    else:
+                        mask = np.zeros(s.shape, dtype=bool)
+                        for struct in [trunk, *trunk.descendants]:
+                            v, y, x = struct.indices()
+                            mask[v, y, x] = True
+                        slc = (nd.find_objects(mask))[0]
+                        subcube = s[slc]
+                        peaks = [leaf.get_peak()[0] for leaf in leaves]
+                        maxes = list(tuples_to_arrays(peaks))
+                        slcoffset = np.array([s.start for s in slc])
+                        for i in [0, 1, 2]:
+                            maxes[i] = maxes[i] - slcoffset[i]
+                        maxes = tuple(maxes)
+                        indep = pruning.all_true([pruning.min_npix(minpix),
+                                                  pruning.min_delta(delta),
+                                                  pruning.contains_seeds(maxes)])
+                        subd = Dendrogram.compute(subcube.filled_data[:].value,
+                                                  verbose=verbose,
+                                                  is_independent=indep)
+                        print('Recomputing leaves for {0} leaves'.format(len(leaves)))
+                        for struct in subd.all_structures:
+                            if struct.is_leaf:
+                                v, y, x = struct.indices()
+                                wslabel[v + slcoffset[0], 
+                                        y + slcoffset[1], 
+                                        x + slcoffset[2]] = runmax + 1
+                                runmax += 1
+                else:
+                    for leaf in leaves:
+                        v, y, x = leaf.indices()
+                        wslabel[v, y, x] = runmax + 1
+                        runmax += 1
+
             else:
                 peaks = [leaf.get_peak()[0] for leaf in leaves]
                 leaves = tuples_to_arrays(peaks)
