@@ -15,7 +15,29 @@ np.seterr(all='ignore')
 
 sig2fwhm = np.sqrt(8 * np.log(2))
 
-def cloudmom(x, y, v, t, target=0):
+def cloudmom(x, y, v, t, target=0, linear_flux_extrapolation=False, **kwargs):
+    """
+    Calculates the moments of a cloud in a data cube.
+
+    Parameters:
+    x (numpy.ndarray): 
+        The x coordinates of the cloud.
+    y (numpy.ndarray): 
+        The y coordinates of the cloud.
+    v (numpy.ndarray): 
+        The velocity coordinates of the cloud.
+    t (numpy.ndarray): 
+        The intensity values at each (x, y, v) coordinate.
+    target (int, optional): 
+        The target moment to calculate. Default is 0.
+    linear_flux_extrapolation (bool, optional): 
+        Whether to extrapolate the flux  linearly (True) or quadratically (false).
+        Default is False.
+
+    Returns:
+    dict: 
+        A dictionary containing the moments of the cloud.
+    """
     moments = {}
     order = np.argsort(t)[::-1]
     t = t[order]
@@ -60,8 +82,12 @@ def cloudmom(x, y, v, t, target=0):
                                 targett=target, slc=slc)
     moments['rmsv_ex'] = extrap(t, mom2v, order=1, 
                                 targett=target, slc=slc)
-    moments['flux_ex'] = extrap(t, mom0t, order=2, 
-                                targett=target, slc=slc)
+    if linear_flux_extrapolation:
+        moments['flux_ex'] = extrap(t, mom0t, order=1, 
+                                    targett=target, slc=slc)
+    else:
+        moments['flux_ex'] = extrap(t, mom0t, order=2, 
+                                    targett=target, slc=slc)
 
     return(moments)
 
@@ -171,6 +197,35 @@ def cloudalyze(cube, label,
                noise=None, verbose=True,
                channelcorr=0.0,
                **kwargs):
+    """
+    Analyzes a given cloud in a data cube.
+
+    Parameters:
+    cube (SpectralCube): 
+        The data cube containing the cloud.
+    label (int): 
+        The label identifying the cloud in the cube.
+    distance (float, optional): 
+        The distance to the cloud. If None, the distance is calculated from the cube.
+    alphaCO (float or function, optional): 
+        The CO-to-H2 conversion factor. Default is 6.7, appropriate for CO(2-1) emission.
+    extrapolate (bool, optional): 
+        Whether to extrapolate the cloud properties. Default is True.
+    bootstrap (int, optional): 
+        The number of bootstrap resamples to perform. Default is 0.
+    rmstorad (float, optional): 
+        The factor to convert RMS to radius. Default is 1.91.
+    noise (float, optional): 
+        The noise level in the cube. If None, the noise is calculated from the cube.
+    verbose (bool, optional): 
+        Whether to print progress information. Default is True.
+    channelcorr (float, optional): 
+        The channel correlation. Default is 0.0.
+    **kwargs: Additional parameters to pass to the cloud property calculation functions.
+
+    Returns:
+    list: A list of dictionaries, each containing the properties of a cloud.
+    """
     cloudlist = []
     spectral_unit = cube.spectral_axis
     dv = np.abs(
@@ -232,7 +287,7 @@ def cloudalyze(cube, label,
         thiscloud['SIGCHAN_KMS'] = sigchan_kms
         thiscloud['TMAX_K'] = np.nanmax(t)
 
-        moments = cloudmom(x, y, v, t)
+        moments = cloudmom(x, y, v, t, **kwargs)
         thiscloud['XCTR_PIX'] = moments['xcen']
         thiscloud['YCTR_PIX'] = moments['ycen']
         thiscloud['VCTR_PIX'] = moments['vcen']
@@ -279,7 +334,7 @@ def cloudalyze(cube, label,
 
         xrot = x * np.cos(pa) + y * np.sin(pa)
         yrot =-x * np.sin(pa) + y * np.cos(pa)
-        moments_rot = cloudmom(xrot, yrot, v, t)
+        moments_rot = cloudmom(xrot, yrot, v, t, **kwargs)
         moments_rot_dc = deconvolve_moments(moments_rot,
                                             cube.beam,
                                             pa,
@@ -365,14 +420,14 @@ def cloudalyze(cube, label,
                 bootlist += [cloudmom(x[subset],
                                       y[subset],
                                       v[subset],
-                                      t[subset])]
+                                      t[subset], **kwargs)]
                 pa, _, _ = pa_moment(x[subset], y[subset], t[subset])
                 xrot = x * np.cos(pa) + y * np.sin(pa)
                 yrot = -x * np.sin(pa) + y * np.cos(pa)
                 bootlist_rot += [cloudmom(xrot[subset],
                                           yrot[subset],
                                           v[subset],
-                                          t[subset])]
+                                          t[subset], **kwargs)]
             boottable = Table(bootlist)
             boottable_rot = Table(bootlist_rot)
             uc_dict = {}
