@@ -57,7 +57,7 @@ def fits2props(cube_file,
 
     # Cast to boolean
     nanmask = np.isnan(mask)
-    mask = mask.astype(np.bool)
+    mask = mask.astype(bool)
     mask[nanmask] = False
 
     s = s.with_mask(mask)
