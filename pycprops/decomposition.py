@@ -37,7 +37,7 @@ def alllocmax(cube, friends=1, specfriends=1):
     data = np.nan_to_num(cube.filled_data[:].value)
     struct = disk(friends)
     maxfilt = nd.maximum_filter(data, footprint=struct[np.newaxis, :])
-    struct = np.ones((2 * specfriends + 1, 1, 1), dtype=np.bool)
+    struct = np.ones((2 * specfriends + 1, 1, 1), dtype=bool)
     maxfilt = nd.maximum_filter(maxfilt, footprint=struct)
     lmaxes = np.where((data == maxfilt) * (data != 0))
     return(lmaxes)
@@ -48,7 +48,7 @@ def deriv_decimate_leaves(d, cube, meta,
                           nredun=2,
                           **kwargs):
     leaves = get_leaves(d)
-    goodleaf = np.ones(len(leaves), dtype=np.bool)
+    goodleaf = np.ones(len(leaves), dtype=bool)
 
     for i, leaf in enumerate(leaves):
         if not goodleaf[i] or (leaf.parent is None):
@@ -113,7 +113,7 @@ def cube_decomp(s,
                                          velocity_convention='radio').spectral_axis)
     meta['wavelength'] = lam
 
-    wslabel = np.zeros(s.shape, dtype=np.int)    
+    wslabel = np.zeros(s.shape, dtype=int)    
     runmax = 0
 
     for trunk in d.trunk:
@@ -174,9 +174,9 @@ def cube_decomp(s,
                 vals = s.filled_data[v, y, x].value
                 lbimage = np.zeros(s.shape)
                 lbimage[v,y,x] = vals 
-                slcs = (nd.find_objects((lbimage != 0).astype(np.int)))[0]
+                slcs = (nd.find_objects((lbimage != 0).astype(int)))[0]
                 
-                label = np.zeros(s.shape, dtype=np.int)
+                label = np.zeros(s.shape, dtype=int)
                 for i in np.arange(len(leaves[0])):
                     label[leaves[0][i], leaves[1][i], leaves[2][i]] = i + 1
 
