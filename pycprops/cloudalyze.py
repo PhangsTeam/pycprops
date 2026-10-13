@@ -10,6 +10,7 @@ from astropy.utils.console import ProgressBar
 from radio_beam import Beam
 from collections import OrderedDict
 import sys, os
+import warnings
 # I too like to live dangerously
 np.seterr(all='ignore')
 
@@ -195,7 +196,7 @@ def cloudalyze(cube, label,
                alphaCO=6.7, extrapolate=True,
                bootstrap=0, rmstorad=1.91,
                noise=None, verbose=True,
-               channelcorr=0.0,
+               channelcorr=0.0, sequential=False,
                **kwargs):
     """
     Analyzes a given cloud in a data cube.
@@ -249,8 +250,10 @@ def cloudalyze(cube, label,
     uniqlabels = np.unique(label)
     # if verbose:
     #     bar = ProgressBar(len(uniqlabels))
+    if rmstorad == 1.91:
+        warnings.warn("Using default rmstorad=1.91, which is the value from Solomon+87. PHANGS recommends 1.13 for marginally resolved clouds.")
 
-    cloudnum = 0
+    cloudcount = 0
 
     if verbose:
         barfile = sys.stdout
@@ -275,9 +278,12 @@ def cloudalyze(cube, label,
                 thiscloud['S2N'] = s2n
             else:
                 thiscloud['S2N'] = np.nan
-        cloudnum += 1
+        cloudcount += 1
         thiscloud['NPIX'] = len(x)
-        thiscloud['CLOUDNUM'] = cloudnum
+        if sequential:
+            thiscloud['CLOUDNUM'] = cloudcount
+        else:
+            thiscloud['CLOUDNUM'] = thislabel
         thiscloud['DISTANCE_PC'] = distance.to(u.pc).value
         thiscloud['BEAMFWHM_PC'] = beamfwhm_pc
         thiscloud['BEAMMAJ_PC'] = bmaj_pc
